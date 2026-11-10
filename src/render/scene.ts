@@ -126,12 +126,21 @@ export function buildMachineScene(machine: SceneMachine, options: SceneOptions):
 		{ x: (first?.center.x ?? 0) - reflectorRadius - geometry.reflectorGap, y: 0, z: 0 },
 		projection,
 	);
+	// Sample each rotor's circumference rather than the corners of its bounding
+	// square: under yaw the square's corners are inside the circle's silhouette,
+	// and the case would clip the rotor it is meant to enclose.
+	const circle = (centre: { x: number; z: number }, radius: number): { x: number; y: number }[] =>
+		Array.from({ length: 12 }, (_, index) => {
+			const angle = (index / 12) * Math.PI * 2;
+			return project(
+				{ x: centre.x + Math.cos(angle) * radius, y: 0, z: centre.z + Math.sin(angle) * radius },
+				projection,
+			);
+		});
+
 	const corners = [...slots, null]
 		.filter((slot): slot is RotorSlot => Boolean(slot))
-		.flatMap((slot) => [
-			project({ x: slot.center.x - slot.radius, y: 0, z: slot.center.z - slot.radius }, projection),
-			project({ x: slot.center.x + slot.radius, y: 0, z: slot.center.z + slot.radius }, projection),
-		])
+		.flatMap((slot) => circle({ x: slot.center.x, z: slot.center.z }, slot.radius))
 		.concat([
 			{ x: reflectorCenter.x - reflectorRadius, y: reflectorCenter.y - reflectorRadius },
 			{ x: reflectorCenter.x + reflectorRadius, y: reflectorCenter.y + reflectorRadius },

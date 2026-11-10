@@ -87,4 +87,4 @@ export {
 	invertWiring,
 	wiringFromLetters,
 } from './core/validate.js';
-export const VERSION = '0.4.0';
+export const VERSION = '0.4.1';
