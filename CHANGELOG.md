@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-11-10
+
+### Fixed
+
+- Rotors are laid out in a row with parallel axes, as they sit in a real
+  machine, instead of as an overlapping stack. Every rotor is now separately
+  visible and separately touchable, and the reflector sits past the left end of
+  the row where the Umkehrwalze sat.
+- The scene's bounds are grown to the viewport's aspect ratio, so a GPU canvas
+  that stretches and an SVG that letterboxes no longer disagree about where a
+  rotor is.
+- `camera.zoom` narrowed the projection as well as the window and therefore
+  cancelled itself out; it now changes only the window, so zooming works.
+- The notch marker and the caption were projected on the wrong side of the disc.
+
 ## [0.2.0] - 2026-11-10
 
 ### Added

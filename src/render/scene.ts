@@ -85,12 +85,19 @@ export interface MachineScene {
  */
 export function buildMachineScene(machine: SceneMachine, options: SceneOptions): MachineScene {
 	const { geometry, camera } = options;
+	// Zoom belongs to the view window, not to the projection: scaling the points
+	// as well would cancel itself out against the bounds.
+	const projection: Camera = { ...camera, zoom: 1 };
 	const count = Math.max(machine.rotors.length, 1);
+	// A real machine's rotors sit side by side with parallel axes, so a top-down
+	// view shows a row of wheels — not a stack. That is also the only layout in
+	// which every rotor is separately touchable.
 	const slots = layoutRotors({
 		rotorCount: count,
 		radius: geometry.radius,
 		thickness: geometry.thickness,
 		gap: geometry.gap,
+		arrangement: 'row',
 	});
 
 	const placed: PlacedRotor[] = slots.map((slot) => {
@@ -102,34 +109,66 @@ export function buildMachineScene(machine: SceneMachine, options: SceneOptions):
 			atNotch: rotor?.atNotch ?? false,
 			index: slot.index,
 			slot,
-			center: project(slot.center, camera),
-			notch: project({ x: slot.center.x, y: 0, z: slot.center.z - slot.radius * 0.92 }, camera),
-			caption: project({ x: slot.center.x, y: 0, z: slot.center.z + slot.radius * 0.62 }, camera),
+			center: project(slot.center, projection),
+			// The notch sits on the index ring at the top of the wheel; the caption
+			// goes just below it, clear of the window letter.
+			notch: project({ x: slot.center.x, y: 0, z: slot.center.z + slot.radius * 0.9 }, projection),
+			caption: project({ x: slot.center.x, y: 0, z: slot.center.z - slot.radius * 1.16 }, projection),
 		};
 	});
 
 	const first = slots[0];
 	const last = slots[slots.length - 1];
-	// The reflector sits past the far end of the stack, beyond the leftmost rotor.
+	// The reflector is a thin wheel past the left end of the row, where the real
+	// Umkehrwalze sat.
+	const reflectorRadius = geometry.radius * 0.72;
 	const reflectorCenter = project(
-		{ x: 0, y: 0, z: (last?.center.z ?? 0) + geometry.reflectorGap + geometry.radius },
-		camera,
+		{ x: (first?.center.x ?? 0) - reflectorRadius - geometry.reflectorGap, y: 0, z: 0 },
+		projection,
 	);
 	const corners = [...slots, null]
 		.filter((slot): slot is RotorSlot => Boolean(slot))
 		.flatMap((slot) => [
-			project({ x: slot.center.x - slot.radius, y: 0, z: slot.center.z - slot.radius }, camera),
-			project({ x: slot.center.x + slot.radius, y: 0, z: slot.center.z + slot.radius }, camera),
+			project({ x: slot.center.x - slot.radius, y: 0, z: slot.center.z - slot.radius }, projection),
+			project({ x: slot.center.x + slot.radius, y: 0, z: slot.center.z + slot.radius }, projection),
 		])
 		.concat([
-			{ x: reflectorCenter.x - geometry.radius * 0.72, y: reflectorCenter.y - geometry.radius * 0.72 },
-			{ x: reflectorCenter.x + geometry.radius * 0.72, y: reflectorCenter.y + geometry.radius * 0.72 },
+			{ x: reflectorCenter.x - reflectorRadius, y: reflectorCenter.y - reflectorRadius },
+			{ x: reflectorCenter.x + reflectorRadius, y: reflectorCenter.y + reflectorRadius },
 		]);
 	const pad = geometry.casePadding;
-	const minX = Math.min(...corners.map((point) => point.x)) - pad;
-	const maxX = Math.max(...corners.map((point) => point.x)) + pad;
-	const minY = Math.min(...corners.map((point) => point.y)) - pad;
-	const maxY = Math.max(...corners.map((point) => point.y)) + pad;
+	let minX = Math.min(...corners.map((point) => point.x)) - pad;
+	let maxX = Math.max(...corners.map((point) => point.x)) + pad;
+	let minY = Math.min(...corners.map((point) => point.y)) - pad;
+	let maxY = Math.max(...corners.map((point) => point.y)) + pad;
+
+	// Grow the shorter axis to the viewport's aspect ratio, centred. Without this
+	// the SVG letterboxes while a GPU canvas stretches, and the two backends
+	// disagree about where every rotor is.
+	const aspect = options.viewport.width / Math.max(options.viewport.height, 1);
+	const width = maxX - minX;
+	const height = maxY - minY;
+	if (width / height < aspect) {
+		const wanted = height * aspect;
+		minX -= (wanted - width) / 2;
+		maxX += (wanted - width) / 2;
+	} else {
+		const wanted = width / aspect;
+		minY -= (wanted - height) / 2;
+		maxY += (wanted - height) / 2;
+	}
+
+	// Zoom shrinks the window onto the machine. It has to be applied to the
+	// bounds, not to the projected points, because the points define the bounds.
+	const zoom = Math.max(camera.zoom, 0.05);
+	const centreX = (minX + maxX) / 2;
+	const centreY = (minY + maxY) / 2;
+	const halfW = (maxX - minX) / 2 / zoom;
+	const halfH = (maxY - minY) / 2 / zoom;
+	minX = centreX - halfW;
+	maxX = centreX + halfW;
+	minY = centreY - halfH;
+	maxY = centreY + halfH;
 
 	return {
 		camera,
@@ -137,7 +176,7 @@ export function buildMachineScene(machine: SceneMachine, options: SceneOptions):
 		geometry,
 		case: { x: minX, y: minY, width: maxX - minX, height: maxY - minY, radius: pad },
 		rotors: placed,
-		reflector: { label: machine.reflectorLabel, center: reflectorCenter, radius: geometry.radius * 0.72 },
+		reflector: { label: machine.reflectorLabel, center: reflectorCenter, radius: reflectorRadius },
 		bounds: { minX, minY, maxX, maxY },
 	};
 }

@@ -86,15 +86,39 @@ describe('scene', () => {
 		});
 	});
 
-	it('gives an overlapping stack to the rotor nearest the viewer', () => {
+	it('puts the reflector past the left end of the row', () => {
 		const built = scene(3);
-		expect(hitTestScene(built, built.rotors[0]?.center ?? { x: 0, y: 0 })).toEqual({ kind: 'rotor', index: 0 });
+		expect(built.reflector.center.x).toBeLessThan(built.rotors[0]?.center.x ?? 0);
+		expect(built.rotors[2]?.center.x).toBeGreaterThan(built.rotors[0]?.center.x ?? 0);
+	});
+
+	it('resolves a tap near a rotor edge to that rotor, and the gap to the case', () => {
+		const built = scene(3);
+		const second = built.rotors[1];
+		if (!second) throw new Error('expected three rotors');
+		expect(hitTestScene(built, { x: second.center.x + second.slot.radius * 0.9, y: second.center.y })).toEqual({
+			kind: 'rotor',
+			index: 1,
+		});
+		const sparse = scene(3, { ...geometry, radius: 10, gap: 20, casePadding: 12 });
+		const first = sparse.rotors[0];
+		if (!first) throw new Error('expected three rotors');
+		expect(hitTestScene(sparse, { x: first.center.x + 16, y: first.center.y }).kind).toBe('case');
 	});
 
 	it('hits the reflector and falls back to the case', () => {
 		const built = scene(3, sparse);
 		expect(hitTestScene(built, built.reflector.center)).toEqual({ kind: 'reflector' });
 		expect(hitTestScene(built, { x: built.case.x + 2, y: built.case.y + 2 })).toEqual({ kind: 'case' });
+	});
+
+	it('zooms by narrowing the window, not by moving the machine', () => {
+		const wide = buildMachineScene({ rotors: scene(3).rotors, reflectorLabel: 'UKW-B' }, { geometry, camera, viewport });
+		const close = buildMachineScene(
+			{ rotors: scene(3).rotors, reflectorLabel: 'UKW-B' },
+			{ geometry, camera: { ...camera, zoom: 2 }, viewport },
+		);
+		expect(close.bounds.maxX - close.bounds.minX).toBeCloseTo((wide.bounds.maxX - wide.bounds.minX) / 2, 3);
 	});
 
 	it('re-projects for a new camera without rebuilding the machine', () => {
