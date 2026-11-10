@@ -21,28 +21,9 @@ permissions:
   attestations: write
 
 jobs:
+  # One definition of "green": the same workflow every pull request runs.
   test:
-    name: test before release
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - run: corepack enable
-      - uses: pnpm/action-setup@v6
-        with:
-          run_install: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - run: pnpm run typecheck
-      - run: pnpm run coverage
-      - run: pnpm run build
-      - run: pnpm run size
+    uses: ./.github/workflows/ci.yml
 
   publish:
     name: publish release
@@ -72,16 +53,17 @@ jobs:
             echo "::error::tag v$tag does not match package.json version $version"
             exit 1
           fi
-      - name: Build and pack
+      - name: Build, pack and check
         run: |
           pnpm run build
-          pnpm run size
           pnpm run size
           pnpm run smoke
           npm pack --pack-destination dist
           cd dist
           sha256sum *.tgz *.umd.js > SHA256SUMS.txt
           cat SHA256SUMS.txt
+      - name: Release notes for this version only
+        run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" > RELEASE_NOTES.md && cat RELEASE_NOTES.md
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v4
         with:
@@ -97,5 +79,5 @@ jobs:
             dist/*.tgz dist/SHA256SUMS.txt \
             dist/enigma-core.umd.js dist/enigma-core-render.umd.js \
             --title "$GITHUB_REF_NAME" \
-            --notes-file CHANGELOG.md \
+            --notes-file RELEASE_NOTES.md \
             --verify-tag
