@@ -1,0 +1,95 @@
+name: release
+
+# A release is only produced from a tag, and only after the tests pass.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and test, but do not publish a release
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  test:
+    name: test before release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: corepack enable
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm run typecheck
+      - run: pnpm run coverage
+      - run: pnpm run build
+      - run: pnpm run size
+
+  publish:
+    name: publish release
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: corepack enable
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Check the tag matches package.json
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          tag="${GITHUB_REF_NAME#v}"
+          echo "package.json=$version tag=$tag"
+          if [ "$version" != "$tag" ]; then
+            echo "::error::tag v$tag does not match package.json version $version"
+            exit 1
+          fi
+      - name: Build and pack
+        run: |
+          pnpm run build
+          pnpm run size
+          npm pack --pack-destination dist
+          cd dist
+          sha256sum *.tgz > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: 'dist/*.tgz'
+      - name: Publish GitHub release
+        if: github.event_name == 'push' || inputs.dry_run == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.tgz dist/SHA256SUMS.txt \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file CHANGELOG.md \
+            --verify-tag

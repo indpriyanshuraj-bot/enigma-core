@@ -1,0 +1,93 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# One run per branch: a new push cancels the run it supersedes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Rolldown and tsc both get faster with a warm cache, and CI has nothing to
+  # protect: keep every optional speed-up on.
+  NODE_OPTIONS: --max-old-space-size=4096
+  CI: true
+
+jobs:
+  verify:
+    name: verify (node 24)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Restore build caches
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules/.cache
+            .tsbuildinfo
+          key: build-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'tsconfig*.json', 'rolldown.config.ts') }}
+          restore-keys: |
+            build-${{ runner.os }}-
+
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test with coverage
+        run: pnpm run coverage
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Bundle budget
+        run: pnpm run size
+
+      - name: Smoke-test the built ESM output
+        run: |
+          node --input-type=module -e "
+            import { buildMachine, keyspaceForPreset } from './dist/index.js';
+            const machine = buildMachine({ rings: 'BBB', positions: 'AAA' });
+            const out = machine.encrypt('AAAAA');
+            if (out !== 'EWTYX') throw new Error('regression: got ' + out);
+            const bits = keyspaceForPreset('enigma-1').bits;
+            if (bits < 81 || bits > 82) throw new Error('regression: ' + bits + ' bits');
+            console.log('esm output ok:', out, bits.toFixed(2) + ' bits');
+          "
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error
