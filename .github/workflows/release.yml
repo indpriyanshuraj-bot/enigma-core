@@ -76,20 +76,26 @@ jobs:
         run: |
           pnpm run build
           pnpm run size
+          pnpm run size
+          pnpm run smoke
           npm pack --pack-destination dist
           cd dist
-          sha256sum *.tgz > SHA256SUMS.txt
+          sha256sum *.tgz *.umd.js > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v4
         with:
-          subject-path: 'dist/*.tgz'
+          subject-path: |
+            dist/*.tgz
+            dist/*.umd.js
       - name: Publish GitHub release
         if: github.event_name == 'push' || inputs.dry_run == false
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/*.tgz dist/SHA256SUMS.txt \
+          gh release create "$GITHUB_REF_NAME" \
+            dist/*.tgz dist/SHA256SUMS.txt \
+            dist/enigma-core.umd.js dist/enigma-core-render.umd.js \
             --title "$GITHUB_REF_NAME" \
             --notes-file CHANGELOG.md \
             --verify-tag

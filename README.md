@@ -6,13 +6,40 @@ that does the geometry but never the styling.
 [![ci](https://github.com/indpriyanshuraj-bot/enigma-core/actions/workflows/ci.yml/badge.svg)](https://github.com/indpriyanshuraj-bot/enigma-core/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/indpriyanshuraj-bot/enigma-core?include_prereleases)](https://github.com/indpriyanshuraj-bot/enigma-core/releases)
 
-Two entry points, both ESM-first and tree-shakeable, with **zero runtime
-dependencies**:
+Three build artefacts from one source, with **zero runtime dependencies**: ESM for
+bundlers and browsers, CommonJS for `require()` and Node servers, and UMD for a plain
+`<script>` tag.
+
+```html
+<!-- script tag / CDN: exposes the EnigmaCore global -->
+<script src="https://cdn.jsdelivr.net/gh/indpriyanshuraj-bot/enigma-core@v0.3.0/dist/enigma-core.umd.js"></script>
+<script>
+	const machine = EnigmaCore.buildMachine({ rings: 'BBB', positions: 'AAA' });
+	console.log(machine.encrypt('AAAAA')); // EWTYX
+</script>
+```
+
+```js
+// Node server, CommonJS
+const { buildMachine } = require('@enigma-lab/core');
+```
+
+Two entry points, each in all three formats:
 
 | Entry | What it is | Touches the DOM |
 | --- | --- | --- |
 | `@enigma-lab/core` | the machine: rotors, reflectors, plugboard, stepping, key space | no |
 | `@enigma-lab/core/render` | projection and layout maths, optional SVG painter | only if you hand it a document |
+
+| File | Format | For |
+| --- | --- | --- |
+| `dist/index.js`, `dist/render.js` | ESM | bundlers, browsers, `<script type="module">` |
+| `dist/index.cjs`, `dist/render.cjs` | CommonJS | `require()`, Node servers, Jest |
+| `dist/enigma-core.umd.js`, `dist/enigma-core-render.umd.js` | UMD | `<script src>`, CDNs |
+
+`pnpm run smoke` loads all of them — ESM `import`, CJS `require`, UMD in a bare VM
+context — and asserts the same published trace through each, so a broken `exports` map
+fails CI rather than a consumer.
 
 The core is plain data in, plain data out. That is what makes it usable from a
 test runner, a worker, a CLI, a server, or a WebGPU renderer.
