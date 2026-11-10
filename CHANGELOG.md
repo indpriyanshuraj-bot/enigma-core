@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-11-10
+
+### Fixed
+
+- `buildMachineScene` measured each rotor's extent from the corners of its bounding
+  square, which under yaw sit inside the circle's silhouette — so the case clipped
+  the rotor it was meant to enclose. The bounds now sample the circumference.
+
 ## [0.4.0] - 2026-11-10
 
 ### Added
