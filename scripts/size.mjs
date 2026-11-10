@@ -6,6 +6,10 @@ import { readFileSync, statSync } from 'node:fs';
 const BUDGETS = {
 	'dist/index.js': 26_000,
 	'dist/render.js': 10_000,
+	'dist/index.cjs': 27_000,
+	'dist/render.cjs': 11_000,
+	'dist/enigma-core.umd.js': 28_000,
+	'dist/enigma-core-render.umd.js': 12_000,
 };
 
 let failed = false;
