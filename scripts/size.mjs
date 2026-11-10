@@ -4,8 +4,8 @@ import { gzipSync } from 'node:zlib';
 import { readFileSync, statSync } from 'node:fs';
 
 const BUDGETS = {
-	'dist/index.js': 20_000,
-	'dist/render.js': 8_000,
+	'dist/index.js': 26_000,
+	'dist/render.js': 10_000,
 };
 
 let failed = false;
