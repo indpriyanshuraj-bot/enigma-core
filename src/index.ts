@@ -24,6 +24,23 @@ export {
 export { EnigmaConfigError, EnigmaError, EnigmaSymbolError } from './core/errors.js';
 export { formatKeyspace, keyspace, keyspaceForPreset, plugboardCount, rotorOrderCount, type KeyspaceBreakdown, type KeyspaceInput } from './core/keyspace.js';
 export { createMachine, EnigmaMachine, type EncryptOptions } from './core/machine.js';
+export {
+	decodeIndicator,
+	encodeIndicator,
+	groupText,
+	receive,
+	transmit,
+	type DailyKey,
+	type ProcedureOptions,
+	type TransmittedMessage,
+} from './core/procedures.js';
+export {
+	generateKey,
+	randomReflector,
+	randomWiring,
+	type GeneratedKey,
+	type GenerateKeyOptions,
+} from './core/keygen.js';
 export { Plugboard } from './core/plugboard.js';
 export {
 	DEFAULT_PRESET_ID,
@@ -53,4 +70,4 @@ export {
 	invertWiring,
 	wiringFromLetters,
 } from './core/validate.js';
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';

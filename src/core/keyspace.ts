@@ -23,6 +23,14 @@ export interface KeyspaceInput {
 	readonly includeRingSettings?: boolean;
 	/** Whether the window start position is part of the key. Default true. */
 	readonly includePositions?: boolean;
+	/**
+	 * How many interchangeable thin rotors could fill the leftmost slot.
+	 *
+	 * The four-rotor M4 chose a Beta *or* a Gamma rotor for the leftmost slot and
+	 * then three of the eight cipher rotors for the rest: 2 × 8·7·6 = 672 orders,
+	 * not the 8·7·6·5 an unordered pool would give.
+	 */
+	readonly thinRotorChoices?: number;
 }
 
 /** Every part of the count, so a UI can show where the numbers come from. */
@@ -78,7 +86,9 @@ export function plugboardCount(alphabetSize: number, cables: number): bigint {
 export function keyspace(input: KeyspaceInput): KeyspaceBreakdown {
 	const alphabetSize = input.alphabetSize ?? 26;
 	const cables = input.cables ?? 10;
-	const rotorOrders = rotorOrderCount(input.rotorPool, input.rotorCount);
+	const thin = input.thinRotorChoices ?? 0;
+	const selection = thin > 0 ? input.rotorCount - 1 : input.rotorCount;
+	const rotorOrders = rotorOrderCount(input.rotorPool, selection) * (thin > 0 ? BigInt(thin) : 1n);
 	const ringSettings = input.includeRingSettings === false ? 1n : pow(alphabetSize, input.rotorCount);
 	const startPositions = input.includePositions === false ? 1n : pow(alphabetSize, input.rotorCount);
 	const plugboard = plugboardCount(alphabetSize, cables);
@@ -101,6 +111,7 @@ export function keyspaceForPreset(preset: MachinePreset | string, cables?: numbe
 		rotorPool: resolved.rotorPool.length,
 		rotorCount: resolved.defaultRotorOrder.length,
 		cables: cables ?? resolved.defaultCables,
+		...(resolved.thinRotorChoices ? { thinRotorChoices: resolved.thinRotorChoices } : {}),
 	});
 }
 

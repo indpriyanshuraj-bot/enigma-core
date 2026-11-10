@@ -65,6 +65,8 @@ export interface MachinePreset {
 	readonly defaultCables: number;
 	/** True when thin rotors sit in the leftmost slot and never step. */
 	readonly hasThinRotor: boolean;
+	/** Interchangeable thin rotors for the leftmost slot, if the machine had any. */
+	readonly thinRotorChoices?: number;
 }
 
 export const PRESETS: Readonly<Record<string, MachinePreset>> = {
@@ -105,6 +107,7 @@ export const PRESETS: Readonly<Record<string, MachinePreset>> = {
 		defaultReflector: 'thin-B',
 		defaultCables: 10,
 		hasThinRotor: true,
+		thinRotorChoices: 2,
 	},
 };
 
