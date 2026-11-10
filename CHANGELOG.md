@@ -4,6 +4,28 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-11-10
+
+### Added
+
+- **Models.** A `MachineModel` describes a whole machine — its rotors, reflectors,
+  defaults, alphabet and which physical parts it has — so a renderer can draw what
+  the core can run. `defineModel` validates, `getModel`/`listModels` read the
+  catalogue, `modelToConfig` produces a runnable config and `modelKeyspace` counts it.
+- **Custom models.** `customModel({ rotorCount, seed, notches, alphabet, reflector })`
+  generates a complete machine deterministically: derangement wirings, an involution
+  reflector, up to a hundred rotors. `encodeModel`/`decodeModel` round-trip it through
+  a short string, so an invented machine can be shared as a link.
+- `scripts/release-notes.mjs`, so a release body carries one version's notes instead
+  of the whole changelog.
+- The CI workflow is now reusable (`workflow_call`) and the release calls it, so the
+  checks a release is gated on are the same ones a pull request runs.
+
+### Fixed
+
+- `modelFromPreset` now includes the thin Beta and Gamma rotors, which the M4 can
+  physically fit even though they are not part of its cipher pool.
+
 ## [0.3.0] - 2026-11-10
 
 ### Added

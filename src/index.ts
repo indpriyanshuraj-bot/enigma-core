@@ -51,6 +51,23 @@ export {
 	type MachinePreset,
 } from './core/presets.js';
 export { createRng, type Rng } from './core/random.js';
+export {
+	customModel,
+	decodeModel,
+	defineModel,
+	encodeModel,
+	getModel,
+	listModels,
+	MODELS,
+	modelFromPreset,
+	modelKeyspace,
+	modelToConfig,
+	type CustomModelOptions,
+	type MachineModel,
+	type ModelInput,
+	type ModelParts,
+	type ModelSettings,
+} from './core/models.js';
 export { Rotor } from './core/rotor.js';
 export type {
 	KeyPress,
@@ -70,4 +87,4 @@ export {
 	invertWiring,
 	wiringFromLetters,
 } from './core/validate.js';
-export const VERSION = '0.3.0';
+export const VERSION = '0.4.0';
