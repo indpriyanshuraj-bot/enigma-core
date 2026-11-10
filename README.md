@@ -30,6 +30,7 @@ const machine = buildMachine({
 
 machine.encrypt('AAAAA');          // 'BDZGO'
 keyspaceForPreset('enigma-1').bits; // 81.2 bits
+keyspaceForPreset('kriegsmarine-m4').bits; // 94.1 bits, 672 rotor orders
 formatKeyspace(keyspaceForPreset('enigma-1')); // '2.79 × 10^24'
 ```
 
@@ -66,8 +67,31 @@ import {
   plugboard) plus entropy in bits.
 - **`createRotorSpec` / `createReflectorSpec`** — build machines the Wehrmacht
   never had: 100 rotors, a 32-symbol alphabet, your own wiring.
-- **`@enigma-lab/core/render`** — `project`, `layoutRotors`, `circlePath`,
-  `renderSceneToSvg`, and a `RenderTheme` you must fill in yourself.
+- **`procedures`** — `transmit`, `receive`, `encodeIndicator`, `decodeIndicator`,
+  `groupText`: the indicator procedure, modelled.
+- **`keygen`** — `generateKey`, `randomWiring`, `randomReflector`.
+- **`@enigma-lab/core/render`** — `buildMachineScene`, `hitTestScene`,
+  `renderMachineSvg`, `project`, `layoutRotors`, and a `RenderTheme` you must
+  fill in yourself.
+
+## Procedures, because that is how it was broken
+
+```ts
+import { buildMachine, transmit, receive, generateKey } from '@enigma-lab/core';
+
+const daily = { rotorOrder: ['I', 'II', 'III'], rings: 'AAA', positions: 'MCK' };
+const sent = transmit(buildMachine(daily), 'attack at dawn', daily, 'QWE');
+// sent.indicator = the message key, encrypted twice — the leak that Welchman and
+// Turing's bombes exploited. sent.body = ATTACKATDAWN, in cipher.
+
+receive(buildMachine(daily), sent, daily).plaintext; // 'ATTACKATDAWN'
+generateKey('kriegsmarine-m4', { seed: 5 });          // a repeatable key sheet
+```
+
+`generateKey` is seeded, so a "random key" can be put in a URL, replayed in a
+test, or printed on a worksheet. `randomWiring` and `randomReflector` build
+machines that never existed, with the same constraints the real ones obeyed: a
+rotor wiring is a derangement, a reflector is an involution with no fixed point.
 
 ## Rendering is deliberately unopinionated
 
@@ -76,17 +100,23 @@ input, so the library cannot impose a look on the machine you are building. It
 ships geometry, not a model.
 
 ```ts
-import { renderSceneToSvg } from '@enigma-lab/core/render';
+import { buildMachineScene, hitTestScene, renderMachineSvg } from '@enigma-lab/core/render';
 
-const svg = renderSceneToSvg(
-	{ rotors: [{ id: 'III', letter: 'A', ringLetter: 'B', atNotch: false }], reflectorLabel: 'UKW-B' },
-	{
-		width: 360, height: 260, radius: 28, thickness: 10, gap: 4,
-		camera: { yaw: 0.45, pitch: 0.9, zoom: 3, origin: { x: 180, y: 130 } },
-		theme: myTheme,
-	},
+const scene = buildMachineScene(
+	{ rotors, reflectorLabel: 'UKW-B' },
+	{ geometry: { radius: 40, thickness: 22, gap: 6, casePadding: 18, reflectorGap: 24 },
+	  camera: { yaw: 0.34, pitch: 1.02, zoom: 1, origin: { x: 180, y: 130 } },
+	  viewport: { width: 360, height: 260 } },
 );
+
+renderMachineSvg(scene, { theme: myTheme, showCase: true, showCaption: true, showNotch: true });
+hitTestScene(scene, { x: 190, y: 140 }); // { kind: 'rotor', index: 0 }
 ```
+
+A scene is projected once and read by every backend, and `hitTestScene` gives the
+same answer whether the frame came from WebGPU, Canvas or SVG — so a tap means
+one thing everywhere. Index 0 is the rotor nearest the viewer and wins a tap that
+overlaps the stack.
 
 ## Install
 
