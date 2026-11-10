@@ -1,0 +1,3 @@
+# enigma-core
+
+Initialising.
