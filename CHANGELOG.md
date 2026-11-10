@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-11-10
+
+### Added
+
+- Three build artefacts from one source, all smoke-tested against the same trace:
+  - `dist/index.js` / `dist/render.js` — ESM for bundlers and browsers,
+  - `dist/index.cjs` / `dist/render.cjs` — CommonJS for `require()`, Node servers and
+    older toolchains,
+  - `dist/enigma-core.umd.js` / `dist/enigma-core-render.umd.js` — UMD for a plain
+    `<script>` tag, exposing the `EnigmaCore` and `EnigmaCoreRender` globals.
+- `exports`, `main`, `module`, `browser`, `unpkg` and `jsdelivr` fields so every consumer
+  resolves the right file without configuration.
+- `pnpm run smoke` loads each artefact — ESM `import`, CJS `require`, UMD in a bare VM
+  context — and asserts the published trace, so a broken `exports` map fails CI.
+- Release assets now include both UMD bundles, each covered by the provenance attestation.
+
 ## [0.2.1] - 2026-11-10
 
 ### Fixed
