@@ -1,17 +1,37 @@
 {
   "name": "@enigma-lab/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Headless, deterministic Enigma machine core in TypeScript, plus an optional framework-agnostic renderer. ESM-first, tree-shakeable, zero dependencies.",
-  "keywords": ["enigma", "cipher", "cryptography", "simulation", "history", "typescript", "headless"],
+  "keywords": [
+    "enigma",
+    "cipher",
+    "cryptography",
+    "simulation",
+    "history",
+    "typescript",
+    "headless"
+  ],
   "license": "MIT",
   "author": "Priyanshu Raj <243560345+indpriyanshuraj@users.noreply.github.com>",
-  "repository": { "type": "git", "url": "git+https://github.com/indpriyanshuraj-bot/enigma-core.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/indpriyanshuraj-bot/enigma-core.git"
+  },
   "homepage": "https://github.com/indpriyanshuraj-bot/enigma-core#readme",
-  "bugs": { "url": "https://github.com/indpriyanshuraj-bot/enigma-core/issues" },
+  "bugs": {
+    "url": "https://github.com/indpriyanshuraj-bot/enigma-core/issues"
+  },
   "type": "module",
   "sideEffects": false,
-  "engines": { "node": ">=20.19" },
-  "files": ["dist", "README.md", "LICENSE", "CHANGELOG.md"],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

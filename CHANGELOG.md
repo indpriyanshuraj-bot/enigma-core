@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-11-10
+
+### Added
+
+- `render/scene`: `buildMachineScene`, `withCamera`, `hitTestScene`. One scene,
+  projected once, drives SVG, Canvas and WebGPU, and one hit test decides what a
+  tap meant in all three.
+- `render/svg`: `renderMachineSvg`, `renderRotorFacesSvg` and `rotorPath` paint a
+  whole machine — case, reflector, rotor stack, windows, captions, notches — from
+  a scene plus a caller-supplied theme.
+- `procedures`: `encodeIndicator`, `decodeIndicator`, `transmit`, `receive` and
+  `groupText`, modelling the indicator procedure that actually leaked the key.
+- `keygen`: `generateKey`, `randomWiring` and `randomReflector` — seeded, so a
+  generated key sheet can be shared, replayed and asserted on.
+- `.npmrc` with `minimumReleaseAge=0`, so dependency tooling can resolve a
+  freshly published package.
+
+### Fixed
+
+- The M4 key space counted 8·7·6·5 = 1680 rotor orders. The machine chose Beta
+  *or* Gamma for the leftmost slot and three of eight for the rest, so the figure
+  is 2·8·7·6 = 672, and the M4 is 94.1 bits rather than 95.4.
+- The reflector was projected into the middle of the rotor stack instead of past
+  its far end, and hit-testing preferred the rotor furthest from the viewer.
+
 ## [0.1.0] - 2026-11-10
 
 ### Added
