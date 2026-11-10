@@ -1,0 +1,51 @@
+{
+  "name": "@enigma-lab/core",
+  "version": "0.1.0",
+  "description": "Headless, deterministic Enigma machine core in TypeScript, plus an optional framework-agnostic renderer. ESM-first, tree-shakeable, zero dependencies.",
+  "keywords": ["enigma", "cipher", "cryptography", "simulation", "history", "typescript", "headless"],
+  "license": "MIT",
+  "author": "Priyanshu Raj <243560345+indpriyanshuraj@users.noreply.github.com>",
+  "repository": { "type": "git", "url": "git+https://github.com/indpriyanshuraj-bot/enigma-core.git" },
+  "homepage": "https://github.com/indpriyanshuraj-bot/enigma-core#readme",
+  "bugs": { "url": "https://github.com/indpriyanshuraj-bot/enigma-core/issues" },
+  "type": "module",
+  "sideEffects": false,
+  "engines": { "node": ">=20.19" },
+  "files": ["dist", "README.md", "LICENSE", "CHANGELOG.md"],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./render": {
+      "types": "./dist/render/index.d.ts",
+      "import": "./dist/render.js",
+      "default": "./dist/render.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "pnpm run build:js && pnpm run build:types",
+    "build:js": "rolldown -c rolldown.config.ts",
+    "build:types": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "size": "node scripts/size.mjs",
+    "pack:release": "pnpm run build && npm pack --pack-destination dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "rolldown": "^1.3.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "packageManager": "pnpm@10.20.0"
+}
